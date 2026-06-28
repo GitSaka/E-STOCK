@@ -1,134 +1,127 @@
-import { PrismaClient, Role, StatutVersement } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('⏳ Début du peuplement de la base de données (Seed)...');
+  console.log("⏳ Début du nettoyage et de la réinitialisation de la base Neon...");
 
-   // 1. NETTOYAGE PRÉALABLE (Ordre strict des clés étrangères)
-  await prisma.fluxVersement.deleteMany({});
-  await prisma.ligneVenteCredit.deleteMany({});
-  await prisma.venteCredit.deleteMany({});
-  await prisma.cliente.deleteMany({});
-  await prisma.approvisionnement.deleteMany({}); // Nettoie les entrées de stock
-  await prisma.produit.deleteMany({});
-  await prisma.user.deleteMany({});
+  // 1. Suppression ordonnée pour éviter les conflits de clés étrangères
+  await prisma.fluxVersement.deleteMany();
+  await prisma.approvisionnement.deleteMany();
+  await prisma.ligneVenteCredit.deleteMany();
+  await prisma.venteCredit.deleteMany();
+  await prisma.cliente.deleteMany();
+  await prisma.produit.deleteMany();
+  
+  // Nettoyage de la relation Many-to-Many des utilisateurs avant suppression
+  await prisma.user.updateMany({ data: {} });
+  await prisma.user.deleteMany();
+  await prisma.zone.deleteMany();
 
+  console.log("✅ Base de données nettoyée avec succès.");
 
-  // 2. CRÉATION DES UTILISATEURS (Chefs et Agents)
-  const motDePasseHache = await bcrypt.hash('PortoNovo2026', 10);
-
-  // Un Chef principal (Admin)
-  const chefAlfred = await prisma.user.create({
-    data: {
-      nom: 'AGBOSSA',
-      prenom: 'Alfred',
-      telephone: '22997000001',
-      motDePasse: motDePasseHache,
-      role: Role.CHEF,
-    },
+  // 2. CRÉATION DES VRAIS SECTEURS (MARCHÉS DE PORTO-NOVO)
+  const zoneOuando = await prisma.zone.create({
+    data: { nom: "Ouando", adresse: "Grand marché Ouando, Porto-Novo" }
   });
 
-  // Un Agent pour la zone Marché Ouando
-  const agentMarc = await prisma.user.create({
-    data: {
-      nom: 'HOUNSOU',
-      prenom: 'Marc',
-      telephone: '22997000002',
-      motDePasse: motDePasseHache,
-      role: Role.AGENT,
-      zone: 'Ouando',
-    },
+  const zoneTokpota = await prisma.zone.create({
+    data: { nom: "Tokpota", adresse: "Marché secondaire de Tokpota" }
   });
 
-  // Un Agent pour la zone Tokpota
-  const agentIdriss = await prisma.user.create({
+  console.log("✅ Secteurs Ouando et Tokpota insérés.");
+
+  // Hachage sécurisé standard des mots de passe de test
+  const passHache = await bcrypt.hash("123456", 10);
+
+  // 3. CRÉATION DES COMPTES SÉCURISÉS (CHEF ET COLLECTEURS MULTI-ZONES)
+  await prisma.user.create({
     data: {
-      nom: 'SOULE',
-      prenom: 'Idriss',
-      telephone: '22997000003',
-      motDePasse: motDePasseHache,
-      role: Role.AGENT,
-      zone: 'Tokpota',
-    },
+      nom: "ALFRED",
+      prenom: "Chef",
+      telephone: "99000000",
+      motDePasse: passHache,
+      role: "CHEF"
+    }
   });
 
-  console.log('✅ Utilisateurs créés (1 Chef, 2 Agents).');
-
-  // 3. CRÉATION DES PRODUITS DE L'INVENTAIRE INITIAL
-  const riz = await prisma.produit.create({
+  // Agent Marc gère uniquement le marché de Ouando
+  await prisma.user.create({
     data: {
-      nom: 'Sac de Riz 50kg',
-      quantiteStock: 150,
-      prixUnitaire: 25000.00, // 25 000 FCFA
-    },
+      nom: "KOFFI",
+      prenom: "Marc",
+      telephone: "97000000",
+      motDePasse: passHache,
+      role: "AGENT",
+      zones: {
+        connect: [{ id: zoneOuando.id }]
+      }
+    }
   });
 
-  const mais = await prisma.produit.create({
+  // Agent Koffi gère le marché de Tokpota
+  await prisma.user.create({
     data: {
-      nom: 'Sac de Maïs 100kg',
-      quantiteStock: 80,
-      prixUnitaire: 18000.00, // 18 000 FCFA
-    },
+      nom: "AGBOSSA",
+      prenom: "Koffi",
+      telephone: "96000000",
+      motDePasse: passHache,
+      role: "AGENT",
+      zones: {
+        connect: [{ id: zoneTokpota.id }]
+      }
+    }
   });
 
-  const huile = await prisma.produit.create({
-    data: {
-      nom: "Bidon d'Huile 25L",
-      quantiteStock: 45,
-      prixUnitaire: 22000.00, // 22 000 FCFA
-    },
+  console.log("✅ Personnel d'administration et collecteurs de terrain créés.");
+
+  // 4. CRÉATION DU CATALOGUE DE MARCHANDISES INITIAL
+  const produitRiz = await prisma.produit.create({
+    data: { nom: "Sac de Riz 50kg", prixUnitaire: 18500, quantiteStock: 50 }
   });
 
-  console.log('✅ Catalogue produits initialisé avec stocks.');
-
-  // 4. CRÉATION DES CLIENTES (Les Bonnes Dames)
-  // Maman Chantal commence avec une dette existante de 30 000 FCFA
-  const mamanChantal = await prisma.cliente.create({
-    data: {
-      nom: 'Maman Chantal',
-      telephone: '22995000001',
-      zone: 'Ouando',
-      soldeDette: 30000.00,
-    },
+  const produitMais = await prisma.produit.create({
+    data: { nom: "Sac de Maïs 50kg", prixUnitaire: 12000, quantiteStock: 120 }
   });
 
-  // Tantie Ablawa commence à 0 FCFA (Pas de dette)
-  const tantieAblawa = await prisma.cliente.create({
+  console.log("✅ Catalogue marchandises initialisé.");
+
+  // 5. CRÉATION DES REVENDEUSES (BONNES DAMES) BRANCHÉES AUX ID DES MARCHÉS
+  await prisma.cliente.create({
     data: {
-      nom: 'Tantie Ablawa',
-      telephone: '22995000002',
-      zone: 'Ouando',
-      soldeDette: 0.00,
-    },
+      nom: "CHANTAL",
+      prenom: "Maman",
+      telephone: "95000001",
+      adresse: "Allée Centrale, Étal 14",
+      zoneId: zoneOuando.id, // Liée physiquement à l'ID de Ouando
+      soldeDette: 45000
+    }
   });
 
-  // Maman Sika commence avec une avance / surplus de 5 000 FCFA (-5000)
-  const mamanSika = await prisma.cliente.create({
+  await prisma.cliente.create({
     data: {
-      nom: 'Maman Sika',
-      telephone: '22995000003',
-      zone: 'Tokpota',
-      soldeDette: -5000.00,
-    },
+      nom: "ABLAWA",
+      prenom: "Tantie",
+      telephone: "95000002",
+      adresse: "Face à la Loterie",
+      zoneId: zoneOuando.id,
+      soldeDette: 15000
+    }
   });
 
-  console.log('✅ Fiches clientes créées avec soldes initiaux.');
-
-  // 5. SIMULATION D'UN FLUX DE VERSEMENT DU TERRAIN (Règle Anti-fraude)
-  // L'agent Marc saisit un versement de 15 000 FCFA de Maman Chantal sur le terrain
-  await prisma.fluxVersement.create({
+  await prisma.cliente.create({
     data: {
-      montantVerse: 15000.00,
-      statut: StatutVersement.EN_ATTENTE, // Reste bloqué tant que le chef ne valide pas
-      clienteId: mamanChantal.id,
-      agentId: agentMarc.id,
-    },
+      nom: "VIWAMI",
+      prenom: "Maman",
+      telephone: "95000003",
+      adresse: "Près du grand hangar",
+      zoneId: zoneTokpota.id, // Liée physiquement à l'ID de Tokpota
+      soldeDette: 0
+    }
   });
 
-  console.log('✅ Simulation de flux terrain injectée (En attente).');
-  console.log('🎉 Seed terminé avec succès ! Base de données prête pour les tests.');
+  console.log("🌱 Population de fausses données de test injectée à 100 % !");
 }
 
 main()
