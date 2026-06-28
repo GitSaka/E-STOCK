@@ -16,6 +16,7 @@ import {
 interface ClienteFormatee {
   id: string;
   nom: string;
+  prenom:string;
   telephone: string | null;
   soldeDette: number;
 }
@@ -36,6 +37,7 @@ export default function CollectesClient({ listeClientes }: CollectesClientProps)
   const [clienteSelectionnee, setClienteSelectionnee] = useState<{
     id: string;
     nom: string;
+    prenom: string;
     telephone: string | null;
     soldeDette: number;
   } | null>(() => {
@@ -177,7 +179,7 @@ export default function CollectesClient({ listeClientes }: CollectesClientProps)
           >
             <option value="" disabled>--- Choisir une maman sur le marché ---</option>
             {listeClientes.map((c) => (
-              <option key={c.id} value={c.id}>{c.nom}</option>
+              <option key={c.id} value={c.id}>{c.nom} {c.prenom}</option>
             ))}
           </select>
         </div>
@@ -215,7 +217,7 @@ export default function CollectesClient({ listeClientes }: CollectesClientProps)
                   <User size={16} />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-sm font-black text-slate-800 truncate leading-tight">{clienteSelectionnee.nom}</h3>
+                  <h3 className="text-sm font-black text-slate-800 truncate leading-tight">{clienteSelectionnee.nom} {clienteSelectionnee.prenom}</h3>
                   <p className="text-[10px] text-slate-400 font-medium mt-0.5">{clienteSelectionnee.telephone || "Aucun numéro enregistré"}</p>
                 </div>
               </div>

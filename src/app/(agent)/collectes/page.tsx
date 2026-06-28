@@ -45,6 +45,7 @@ export default async function CollectesPage() {
     select: {
       id: true,
       nom: true,
+      prenom: true,
       telephone: true,
       soldeDette: true,
     },
@@ -54,6 +55,7 @@ export default async function CollectesPage() {
   interface ClienteQueryType {
     id: string;
     nom: string;
+    prenom:string;
     telephone: string | null;
     soldeDette: Decimal; // Type officiel de Prisma
   }
@@ -62,6 +64,7 @@ export default async function CollectesPage() {
   const clientesFormatees = (clientesReal as unknown as ClienteQueryType[]).map((c: ClienteQueryType) => ({
     id: c.id,
     nom: c.nom,
+    prenom: c.prenom,
     telephone: c.telephone,
     soldeDette: Number(c.soldeDette),
   }));

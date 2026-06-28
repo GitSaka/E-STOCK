@@ -44,10 +44,9 @@ export async function seConnecterAction(
     }
 
     // 4. Création de la session sécurisée (Cookie HTTP-Only)
-    const donneesSession = JSON.stringify({
+     const donneesSession = JSON.stringify({
       id: utilisateur.id,
       role: utilisateur.role,
-      zone: utilisateur.zone,
     });
 
     const cookieStore = await cookies();

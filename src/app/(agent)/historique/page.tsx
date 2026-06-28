@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import HistoriqueClient from "./HistoriqueClient";
+import { Decimal } from "@prisma/client/runtime/library";
 
 export default async function HistoriquePage() {
   const cookieStore = await cookies();
@@ -20,7 +21,7 @@ export default async function HistoriquePage() {
   const finJournee = new Date();
   finJournee.setHours(23, 59, 59, 999);
 
-  // Extraction des collectes réelles sur Neon
+  // Extraction des collectes réelles sur Neon avec la relation de zone
   const collectesReal = await prisma.fluxVersement.findMany({
     where: {
       agentId: agentId,
@@ -29,23 +30,35 @@ export default async function HistoriquePage() {
     orderBy: { dateCollecte: "desc" },
     include: {
       cliente: {
-        select: { nom: true, zone: true, soldeDette: true }
+        select: { 
+          nom: true, 
+          soldeDette: true,
+          zone: {
+            select: { nom: true } // 🟢 Charge le nom du marché via la relation
+          }
+        }
       }
     }
   });
 
+  // Interface stricte sans aucun 'any' pour le compilateur
   interface PrismaHistoryRow {
     id: string;
-    montantVerse: any;
+    montantVerse: Decimal;
     statut: "EN_ATTENTE" | "VALIDE";
     dateCollecte: Date;
-    cliente: { nom: string; zone: string; soldeDette: any };
+    cliente: { 
+      nom: string; 
+      soldeDette: Decimal;
+      zone: { nom: string }; // 🟢 L'objet relationnel typé proprement
+    };
   }
 
-  const historiqueFormate = collectesReal.map((c: PrismaHistoryRow) => ({
-    id: c.id.substring(0, 5).toUpperCase(), // Raccourcit l'ID cuid pour l'affichage
+  // Conversion et formatage pour l'affichage
+  const historiqueFormate = (collectesReal as unknown as PrismaHistoryRow[]).map((c: PrismaHistoryRow) => ({
+    id: c.id.substring(0, 5).toUpperCase(), 
     mamanNom: c.cliente.nom,
-    zone: c.cliente.zone,
+    zone: c.cliente.zone.nom, // 🟢 Récupère le texte depuis l'objet relationnel
     montant: Number(c.montantVerse),
     resteAPayer: Number(c.cliente.soldeDette),
     statut: c.statut,
@@ -55,5 +68,6 @@ export default async function HistoriquePage() {
     }),
   }));
 
+  // Renvoie exactement ton composant initial sans casser tes props
   return <HistoriqueClient listeHistorique={historiqueFormate} />;
 }
