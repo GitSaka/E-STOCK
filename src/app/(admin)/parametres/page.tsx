@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { Decimal } from "@prisma/client/runtime/library";
 import ParametresClient from "./ParametresClient";
 
+export const dynamic = "force-dynamic";
+
 export default async function ParametresPage() {
   // 1. Chargement des vraies zones / marchés
   const zonesReal = await prisma.zone.findMany({

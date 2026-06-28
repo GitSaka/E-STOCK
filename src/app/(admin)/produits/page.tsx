@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import ProduitsClient from "./ProduitsClient";
 import { Decimal } from "@prisma/client/runtime/library";
 
+export const dynamic = "force-dynamic";
+
 export default async function ProduitsPage() {
   // 1. Extraction de tous les produits ET de leurs arrivages depuis Neon
   const produitsReal = await prisma.produit.findMany({
