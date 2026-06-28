@@ -32,7 +32,20 @@ export default function CollectesClient({ listeClientes }: CollectesClientProps)
   const clienteIdUrl = searchParams.get("id");
 
   // États réactifs pour piloter l'interface
-  const [clienteSelectionnee, setClienteSelectionnee] = useState<ClienteFormatee | null>(null);
+    // 🟢 INITIALISATION PARESSEUSE TYPÉE : Plus aucun 'any' pour le linter
+  const [clienteSelectionnee, setClienteSelectionnee] = useState<{
+    id: string;
+    nom: string;
+    telephone: string | null;
+    soldeDette: number;
+  } | null>(() => {
+    if (clienteIdUrl && listeClientes.length > 0) {
+      return listeClientes.find((c) => c.id === clienteIdUrl) || null;
+    }
+    return null;
+  });
+
+
   const [montantSaisi, setMontantSaisi] = useState("");
   const [estEnCoursDeValidation, setEstEnCoursDeValidation] = useState(false);
   const [messageSucces, setMessageSucces] = useState(false);
@@ -57,24 +70,34 @@ export default function CollectesClient({ listeClientes }: CollectesClientProps)
   const [collectesMaman, setCollectesMaman] = useState<CollecteLigneType[]>([]);
 
   // Charge et rafraîchit automatiquement l'historique de la maman
+  // 🟢 CORRECTION RECTIFIÉE SANS APPEL SYNCHRONE DIRECT
+    // 🟢 VERSION BLINDÉE : Plus aucun appel synchrone au premier niveau de l'effet
   useEffect(() => {
-    if (clienteSelectionnee) {
-      obtenirVersementsDuJourParCliente(clienteSelectionnee.id).then((donnees) => {
+    if (!clienteSelectionnee) return;
+
+    let estActif = true;
+
+    obtenirVersementsDuJourParCliente(clienteSelectionnee.id).then((donnees) => {
+      if (estActif) {
         setCollectesMaman(donnees);
-      });
-    } else {
-      setCollectesMaman([]);
-    }
+      }
+    });
+
+    return () => {
+      estActif = false;
+    };
   }, [clienteSelectionnee, messageSucces]);
 
 
+
+
   // Écouteur : si un ID est présent dans l'URL, on pré-charge automatiquement la bonne dame
-  useEffect(() => {
-    if (clienteIdUrl && listeClientes.length > 0) {
-      const trouvee = listeClientes.find((c) => c.id === clienteIdUrl);
-      if (trouvee) setClienteSelectionnee(trouvee);
-    }
-  }, [clienteIdUrl, listeClientes]);
+  // useEffect(() => {
+  //   if (clienteIdUrl && listeClientes.length > 0) {
+  //     const trouvee = listeClientes.find((c) => c.id === clienteIdUrl);
+  //     if (trouvee) setClienteSelectionnee(trouvee);
+  //   }
+  // }, [clienteIdUrl, listeClientes]);
 
     // Fonction chirurgicale qui gère la soumission (Création OU Modification sans doublon)
   const handleSoumissionVersement = async (e: React.FormEvent) => {
@@ -140,9 +163,15 @@ export default function CollectesClient({ listeClientes }: CollectesClientProps)
           <select
             onChange={(e) => {
               const trouvee = listeClientes.find((c) => c.id === e.target.value);
+              // 1. On mémorise la maman sélectionnée (ou null si vide)
               setClienteSelectionnee(trouvee || null);
+              
+              // 2. 🟢 CORRECTION REACT 19 : On vide la liste ici sur l'action de l'agent
+              setCollectesMaman([]); 
+              
               setErreurServeur(null);
             }}
+           
             className="block w-full p-2.5 text-xs text-slate-900 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-1 focus:ring-green-500 cursor-pointer"
             value={clienteSelectionnee?.id || ""}
           >
@@ -294,7 +323,7 @@ export default function CollectesClient({ listeClientes }: CollectesClientProps)
                   ))
                 ) : (
                   <p className="text-[11px] text-slate-400 text-center py-2">
-                    Aucun versement enregistré aujourd'hui pour cette maman.
+                    {"Aucun versement enregistré aujourd'hui pour cette maman."}
                   </p>
                 )}
               </div>
