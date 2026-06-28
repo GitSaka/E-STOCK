@@ -5,6 +5,7 @@ import { Decimal } from "@prisma/client/runtime/library";
 import ParametresClient from "./ParametresClient";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function ParametresPage() {
   // 1. Chargement des vraies zones / marchés

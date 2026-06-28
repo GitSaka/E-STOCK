@@ -3,6 +3,7 @@ import ProduitsClient from "./ProduitsClient";
 import { Decimal } from "@prisma/client/runtime/library";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function ProduitsPage() {
   // 1. Extraction de tous les produits ET de leurs arrivages depuis Neon
