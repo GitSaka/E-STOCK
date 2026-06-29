@@ -49,6 +49,7 @@ export default async function MobileDashboardPage() {
     select: {
       id: true,
       nom: true,
+      prenom: true,
       telephone: true,
       soldeDette: true,
     }
