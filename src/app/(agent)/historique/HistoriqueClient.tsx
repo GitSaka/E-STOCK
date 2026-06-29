@@ -69,7 +69,7 @@ export default function HistoriqueClient({ listeHistorique }: HistoriqueClientPr
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Filtrer par nom de maman..."
+            placeholder="Filtrer par nom des dame..."
             value={recherche}
             onChange={(e) => setRecherche(e.target.value)}
             className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition shadow-2xs hover:border-slate-300"
