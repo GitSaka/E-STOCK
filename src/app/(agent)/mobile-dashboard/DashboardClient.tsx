@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Wallet, ArrowRight, MapPin, User, LogOut, LayoutDashboard } from "lucide-react";
+import { Search, Wallet, ArrowRight, MapPin, User, LogOut, LayoutDashboard, X } from "lucide-react";
 import Link from "next/link";
 
 interface ClienteType {
@@ -26,6 +26,9 @@ export default function DashboardClient({
   initialClientes
 }: DashboardClientProps) {
   const [recherche, setRecherche] = useState("");
+    // 🟢 Contrôle de la pop-up pour lister les marchés de l'agent
+  const [popMarchesOuverte, setPopMarchesOuverte] = useState(false);
+
 
   const clientesFiltrees = initialClientes.filter((c) =>
     c.nom.toLowerCase().includes(recherche.toLowerCase())
@@ -82,9 +85,20 @@ export default function DashboardClient({
               <User size={14} className="text-slate-400" />
               <span className="text-xs font-semibold truncate max-w-[150px]">{agentName}</span>
             </div>
-            <span className="bg-green-600 px-2 py-1 rounded-lg font-bold text-[10px] tracking-wide flex items-center gap-1 uppercase">
-              <MapPin size={10} /> MARCHÉ {zoneName}
-            </span>
+           
+                        {/* 🟢 BADGE DEVENU BOUTON INTERACTIF ANTI-DÉBORDEMENT */}
+            <button
+              type="button"
+              onClick={() => setPopMarchesOuverte(true)}
+              className="bg-green-600 hover:bg-green-700 active:scale-95 text-white px-2 py-1 rounded-lg font-bold text-[10px] tracking-wide flex items-center gap-1 uppercase max-w-[130px] sm:max-w-xs transition cursor-pointer select-none"
+            >
+              <MapPin size={10} className="shrink-0" />
+              <span className="truncate">
+                MARCHÉ {zoneName}
+              </span>
+            </button>
+
+
           </div>
 
           {/* Carte Poche du Jour (Donnée réelle de la caisse en attente) */}
@@ -174,6 +188,59 @@ export default function DashboardClient({
           )}
         </div>
       </main>
+
+            {/* ========================================================================= */}
+      {/* 🟢 POP-UP INTERACTIVE : LISTE COMPLÈTE DES MARCHÉS DE L'AGENT            */}
+      {/* ========================================================================= */}
+      {popMarchesOuverte && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-in fade-in duration-150">
+          
+          {/* Boîte Translucide Glassmorphism */}
+          <div className="bg-white/95 backdrop-blur-xl border border-slate-200/80 shadow-2xl rounded-2xl w-full max-w-xs p-4 space-y-3 relative animate-in zoom-in-95 duration-150">
+            
+            {/* Bouton de fermeture en haut à droite */}
+            <button 
+              type="button" 
+              onClick={() => setPopMarchesOuverte(false)}
+              className="absolute top-2.5 right-2.5 p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition cursor-pointer"
+            >
+              <X size={14} />
+            </button>
+
+            {/* En-tête de la pop-up */}
+            <div className="flex items-center gap-1.5 border-b border-slate-100 pb-2">
+              <MapPin size={14} className="text-green-600" />
+              <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                Vos Secteurs Assignés
+              </h3>
+            </div>
+
+            {/* Liste aérée et lisible des marchés réels */}
+            <div className="space-y-1.5 max-h-40 overflow-y-auto pr-0.5">
+              {zoneName.split(", ").map((marche, index) => (
+                <div 
+                  key={index} 
+                  className="flex items-center gap-2 bg-slate-50 border border-slate-200/50 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 shadow-3xs"
+                >
+                  <div className="h-2 w-2 rounded-full bg-green-500 shrink-0" />
+                  <span className="truncate">Marché {marche}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Bouton fermer du bas */}
+            <button
+              type="button"
+              onClick={() => setPopMarchesOuverte(false)}
+              className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 rounded-xl text-xs transition cursor-pointer active:scale-98"
+            >
+              Fermer la vue
+            </button>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
