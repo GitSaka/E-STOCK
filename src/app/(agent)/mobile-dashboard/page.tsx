@@ -73,6 +73,7 @@ export default async function MobileDashboardPage() {
   interface ClienteQueryType {
     id: string;
     nom: string;
+    prenom: string;
     telephone: string | null;
     soldeDette: Decimal; // 🟢 Remplacé par le type officiel de Prisma
   }
@@ -80,6 +81,7 @@ export default async function MobileDashboardPage() {
   const clientesFormatees = (clientesReal as unknown as ClienteQueryType[]).map((c: ClienteQueryType) => ({
     id: c.id,
     nom: c.nom,
+    prenom: c.prenom,
     telephone: c.telephone,
     soldeDette: Number(c.soldeDette)
   }));

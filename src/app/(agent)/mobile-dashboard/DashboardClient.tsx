@@ -7,6 +7,7 @@ import Link from "next/link";
 interface ClienteType {
   id: string;
   nom: string;
+  prenom: string;
   telephone: string | null;
   soldeDette: number;
 }
@@ -133,7 +134,7 @@ export default function DashboardClient({
                 >
                   <div className="min-w-0 flex-1 pr-3">
                     <p className="text-sm font-bold text-slate-800 group-hover:text-green-700 transition truncate">
-                      {cliente.nom}
+                      {cliente.nom} {cliente.prenom}
                     </p>
                     <p className="text-xs text-slate-400 mt-0.5 font-medium">
                       {cliente.telephone || "Pas de numéro"}
